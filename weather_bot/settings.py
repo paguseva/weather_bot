@@ -65,6 +65,10 @@ LOCATION_SELECTION_MSG = (
     'Which one of the following locations is yours?'
 )
 
+CANCEL_SELECTION_MSG = (
+    'Okay, try /set_location again and make you query a little bit more specific.'
+)
+
 NEW_LOCATION_COORDS_MSG = (
     'Your new location has latitude {lat} and longitude {lon}.'
 )

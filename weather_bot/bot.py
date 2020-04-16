@@ -1,4 +1,4 @@
-from enum import Enum, auto
+from enum import IntEnum, auto
 import logging
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
@@ -14,16 +14,16 @@ from weather_bot.utils import (get_place_from_coords, get_places_from_text,
 logger = logging.getLogger(__name__)
 
 
-class UserData(Enum):
+class UserData(IntEnum):
     POSSIBLE_LOCATIONS = auto()
 
 
-class Status(Enum):
+class Status(IntEnum):
     WAITING_FOR_LOCATION = auto()
     WAITING_FOR_CLARIFICATION = auto()
 
 
-class Signal(Enum):
+class Signal(IntEnum):
     CANCEL = -1
 
 
@@ -83,7 +83,7 @@ def set_location_by_name(update, context):
             InlineKeyboardButton(text=search_results[i]['address'], callback_data=str(i))
         ])
     buttons.append([
-        InlineKeyboardButton(text='None of those', callback_data=str(Signal.CANCEL))
+        InlineKeyboardButton(text='None of those', callback_data=str(Signal.CANCEL.value))
     ])
     context.user_data[UserData.POSSIBLE_LOCATIONS] = search_results
     keyboard = InlineKeyboardMarkup(buttons)
@@ -117,9 +117,9 @@ def select_location(update, context):
     """
     Sets location based on the option that was selected by user
     """
-    if update.callback_query.data == '-1':
+    if int(update.callback_query.data) == Signal.CANCEL:
         update.callback_query.answer()
-        update.callback_query.edit_message_text(text=settings.INCORRECT_SEARCH_RESULT_MSG)
+        update.callback_query.edit_message_text(text=settings.CANCEL_SELECTION_MSG)
     else:
         id = int(update.callback_query.data)
         location_data = context.user_data[UserData.POSSIBLE_LOCATIONS][id]
