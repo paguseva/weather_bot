@@ -8,7 +8,7 @@ from telegram.ext import (Updater, CommandHandler, ConversationHandler, MessageH
 from weather_bot.db import Database
 import weather_bot.settings as settings
 from weather_bot.utils import (get_place_from_coords, get_places_from_text,
-                                current_weather_for_coords, kelvin_to_celsius)
+                                current_weather_for_coords, select_emoji)
 
 
 logger = logging.getLogger(__name__)
@@ -28,9 +28,12 @@ class Signal(Enum):
 
 
 def build_new_location_message(lat, long, place=None):
-    msg = f'Your new location has latitude {round(float(lat), 2)} and longitude {round(float(long), 2)}.'
+    msg = settings.NEW_LOCATION_COORDS_MSG.format(
+        lat=round(float(lat), 2),
+        lon=round(float(long), 2),
+    )
     if place is not None:
-        msg += '\n\nThis point is in {}.'.format(place)
+        msg += settings.NEW_LOCATION_PLACE_MSG.format(place=place)
     return msg
 
 
@@ -40,7 +43,7 @@ def on_error(update, context):
 
 def on_set_location(update, context):
     logger.info('Setting user location')
-    update.message.reply_text(settings.LOCATION_INQUIRY)
+    update.message.reply_text(settings.LOCATION_INQUIRY_MSG)
     return Status.WAITING_FOR_LOCATION
 
 
@@ -71,7 +74,7 @@ def set_location_by_name(update, context):
     place_query = update.message.text
     search_results = get_places_from_text(place_query)
     if search_results is None:
-        update.message.reply_text(settings.CANCELLATION_TEXT)
+        update.message.reply_text(settings.CANCELLATION_MSG)
         return ConversationHandler.END
     # Build keyboard for results
     buttons = []
@@ -84,7 +87,7 @@ def set_location_by_name(update, context):
     ])
     context.user_data[UserData.POSSIBLE_LOCATIONS] = search_results
     keyboard = InlineKeyboardMarkup(buttons)
-    update.message.reply_text('Which one of the following locations is yours?', reply_markup=keyboard)
+    update.message.reply_text(settings.LOCATION_SELECTION_MSG, reply_markup=keyboard)
     return Status.WAITING_FOR_CLARIFICATION
 
 
@@ -116,7 +119,7 @@ def select_location(update, context):
     """
     if update.callback_query.data == '-1':
         update.callback_query.answer()
-        update.callback_query.edit_message_text(text=settings.INCORRECT_SEARCH_RESULT_TEXT)
+        update.callback_query.edit_message_text(text=settings.INCORRECT_SEARCH_RESULT_MSG)
     else:
         id = int(update.callback_query.data)
         location_data = context.user_data[UserData.POSSIBLE_LOCATIONS][id]
@@ -137,10 +140,12 @@ def on_my_location(update, context):
     db = Database()
     result = db.exec_and_fetch(f'SELECT loc FROM location WHERE id={update.effective_user.id};')
     if not result:
-        update.message.reply_text(settings.LOCATION_NOT_SET_TEXT)
+        update.message.reply_text(settings.LOCATION_NOT_SET_MSG)
     else:
         update.message.reply_text(
-            f'Your current location is {result[0][0]}.'
+            settings.CURRENT_LOCATION_MSG.format(
+                location=result[0][0]
+            )
         )
 
 
@@ -151,16 +156,18 @@ def on_current_weather(update, context):
     db = Database()
     result = db.exec_and_fetch(f'SELECT lat, lon FROM location WHERE id={update.effective_user.id};')
     if not result:
-        update.message.reply_text(settings.LOCATION_NOT_SET_TEXT)
+        update.message.reply_text(settings.LOCATION_NOT_SET_MSG)
         return
     lat, lon = result[0]
     weather_data = current_weather_for_coords(lat, lon)
     msg = (
-        'Right now weather is {desc}.\n\n'
-        'The temperature is {temp:.2f}°C, but it feels like {feel_temp:.2f}°C.'.format(
+        settings.WEATHER_TEXT_MSG.format(
             desc=weather_data['weather'][0]['main'],
-            temp=kelvin_to_celsius(weather_data['main']['temp']),
-            feel_temp=kelvin_to_celsius(weather_data['main']['feels_like']),
+            temp=weather_data['main']['temp'],
+            feel_temp=weather_data['main']['feels_like'],
+            emoji=select_emoji(weather_data['weather'][0]),
+            wind_speed=weather_data['wind']['speed'],
+            advice='No advice yet! Come back later ;)'
         )
     )
     update.message.reply_text(msg)
@@ -171,12 +178,12 @@ def on_start(update, context):
 
 
 def on_cancel(update, context):
-    update.message.reply_text(settings.CANCELLATION_TEXT)
+    update.message.reply_text(settings.CANCELLATION_MSG)
     return ConversationHandler.END
 
 
 def on_timeout(update, context):
-    update.message.reply_text(settings.TIMEOUT_TEXT)
+    update.message.reply_text(settings.TIMEOUT_MSG)
     return ConversationHandler.END
 
 

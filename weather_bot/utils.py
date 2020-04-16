@@ -2,7 +2,8 @@ import logging
 import requests
 
 from weather_bot.settings import (LOCIQ_TOKEN, OWA_TOKEN, FORWARD_ENCODING_NECESSARY_FIELDS,
-                                    ADDRESS_CITY_SUBS, ADDRESS_COUNTRY_SUBS, DUPLICATE_MAX_DISTANCE)
+                                    ADDRESS_CITY_SUBS, ADDRESS_COUNTRY_SUBS, DUPLICATE_MAX_DISTANCE,
+                                    WEATHER_TO_EMOJI)
 
 
 logger = logging.getLogger(__name__)
@@ -28,6 +29,16 @@ def build_place_name(data):
     if address.get('postcode') is not None:
         result += ' [{}]'.format(address['postcode'])
     return result
+
+
+def select_emoji(weather_element):
+    main = weather_element.get('main')
+    if main is None:
+        return ''
+    emoji = WEATHER_TO_EMOJI.get(main)
+    if isinstance(emoji, dict):
+        emoji = emoji.get(weather_element['description'])
+    return emoji if emoji is not None else ''
 
 
 def sqr_distance(x_1, y_1, x_2, y_2):
@@ -113,6 +124,7 @@ def current_weather_for_coords(lat, long):
         'lat': lat,
         'lon': long,
         'appid': OWA_TOKEN,
+        'units': 'metric',
     }
     response = requests.get('https://api.openweathermap.org/data/2.5/weather', params=data)
     if response.status_code != 200:
