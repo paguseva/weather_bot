@@ -4,7 +4,7 @@ import requests
 from weather_bot.settings import (LOCIQ_TOKEN, OWA_TOKEN, FORWARD_ENCODING_NECESSARY_FIELDS,
                                     ADDRESS_CITY_SUBS, ADDRESS_COUNTRY_SUBS, DUPLICATE_MAX_DISTANCE,
                                     WEATHER_TO_EMOJI, DANGER_WARNING, RAIN_WARNING, ADVICE_TEMPLATE_MSG,
-                                    TEMP_ADVICE)
+                                    TEMP_ADVICE, UV_WARNING)
 
 
 logger = logging.getLogger(__name__)
@@ -121,7 +121,6 @@ def get_places_from_text(query):
 
 
 def current_weather_for_coords(lat, long):
-    # TODO: Request UV index and suggest using sunscreen if value >= 3
     data = {
         'lat': lat,
         'lon': long,
@@ -137,7 +136,28 @@ def current_weather_for_coords(lat, long):
             )
         )
         return
-    return response.json()
+    json_obj = response.json()
+    json_obj['uv_index'] = uv_index_for_coords(lat, long)
+    return json_obj
+
+
+def uv_index_for_coords(lat, long):
+    data = {
+        'lat': lat,
+        'lon': long,
+        'appid': OWA_TOKEN,
+    }
+    response = requests.get('https://api.openweathermap.org/data/2.5/uvi', params=data)
+    if response.status_code != 200:
+        logger.warning(
+            'Unable to reach OpenWeather API. '
+            'Got status code {} for input ({}, {})'.format(
+                response.status_code, lat, long
+            )
+        )
+    json_obj = response.json()
+    return json_obj['val']
+
 
 def outerwear_advice(data):
     """
@@ -176,10 +196,15 @@ def outerwear_advice(data):
     msg = ADVICE_TEMPLATE_MSG.format(
         clothes_type=advised_clothing
     )
+
+    uv_index = data['uv_index']
+    # If UV Index is greater than 3, then there is a risk of harm from unprotected sun exposure.
+    # It is highly recommended to use sunscreen
+    if uv_index > 3:
+        msg += UV_WARNING
     if is_raining:
         msg += RAIN_WARNING
     if is_dangerous:
         msg += DANGER_WARNING
-
     return msg
     
