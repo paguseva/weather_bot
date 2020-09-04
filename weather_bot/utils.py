@@ -167,10 +167,10 @@ def outerwear_advice(data):
     if wind_speed > 30 or not -40 < temp < 50:
         is_dangerous = True
     
-    advised_clothes = None
+    advised_clothing = None
     for upper_bound, advice_for_temp in TEMP_ADVICE:
         if upper_bound is not None and temp < upper_bound:
-            advised_clothes = advice_for_temp
+            advised_clothing = advice_for_temp
             break
 
     msg = ADVICE_TEMPLATE_MSG.format(
