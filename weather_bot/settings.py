@@ -92,7 +92,7 @@ DANGER_WARNING = emojize(
 )
 
 UV_WARNING = emojize(
-    '\n\n:high_brightness: Note that UV index is high right now, hence it is highly recommended to use sunscreen.'
+    '\n\n:boom: Note that UV index is high right now, hence it is highly recommended to use sunscreen.'
 )
 
 TEMP_ADVICE = [
