@@ -77,6 +77,30 @@ NEW_LOCATION_PLACE_MSG = (
     '\n\nThis point is in {place}.'
 )
 
+ADVICE_TEMPLATE_MSG = (
+    'My advice is to wear {clothes_type}.'
+)
+
+RAIN_WARNING = emojize(
+    "\n\n:umbrella: It is raining, so don't forget your umbrella.",
+    use_aliases=True
+)
+
+DANGER_WARNING = emojize(
+    '\n\n:heavy_exclamation_mark: The weather seems dangerous. Consider staying home.',
+    use_aliases=True
+)
+
+TEMP_ADVICE = [
+    # (upper bound, advice)
+    ( -15, 'an extra-thick insulatet puffer coat'),
+    (   5, 'a thick winter coat or a puffer jacket'),
+    (  13, 'a coat or a jacket with a sweater underneath'),
+    (  21, 'a light jacket or a sweater'),
+    (  30, 'light clothes like a t-shirt or a thin shirt with a pair of loose-fitted pants'),
+    (None, 'extra light clothes like a tank top or a short-sleeved shirt, a pair of shorts or a skirt, and sandals'),
+]
+
 FORWARD_ENCODING_NECESSARY_FIELDS = [
     'address',
     'lat',
