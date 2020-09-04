@@ -3,7 +3,8 @@ import requests
 
 from weather_bot.settings import (LOCIQ_TOKEN, OWA_TOKEN, FORWARD_ENCODING_NECESSARY_FIELDS,
                                     ADDRESS_CITY_SUBS, ADDRESS_COUNTRY_SUBS, DUPLICATE_MAX_DISTANCE,
-                                    WEATHER_TO_EMOJI)
+                                    WEATHER_TO_EMOJI, DANGER_WARNING, RAIN_WARNING, ADVICE_TEMPLATE_MSG,
+                                    TEMP_ADVICE)
 
 
 logger = logging.getLogger(__name__)
@@ -120,6 +121,7 @@ def get_places_from_text(query):
 
 
 def current_weather_for_coords(lat, long):
+    # TODO: Request UV index and suggest using sunscreen if value >= 3
     data = {
         'lat': lat,
         'lon': long,
@@ -136,3 +138,48 @@ def current_weather_for_coords(lat, long):
         )
         return
     return response.json()
+
+def outerwear_advice(data):
+    """
+    Gives a recommendation based on weather codes, wind, and temperature.
+    https://openweathermap.org/weather-conditions
+    """
+    is_raining = False
+    is_snowing = False
+    is_dangerous = False
+
+    for condition in data['weather']:
+        condition_id = condition['id']
+        condition_group = condition_id // 100
+        if condition_group in [2, 5] or (condition_group == 3 and condition_id > 301):
+            is_raining = True
+        if condition_group == 6:
+            is_snowing = True
+        if condition_id in [212, 504, 511, 781]: # Extreme rain or hurricane
+            is_dangerous = True
+    
+    wind_speed = data['wind']['speed']
+    temp = data['main']['feels_like']
+    # 30 m/s is around 67 mph, which is considered a storm, according to Beaufort scale of wind force
+    # In some places temperature may fall below -40C or go as far as 50C
+    # Survival in such conditions obviously requires special gear, so let's consider temperature 
+    # that falls out of (-40, 50) interval dangerous
+    if wind_speed > 30 or not -40 < temp < 50:
+        is_dangerous = True
+    
+    advised_clothes = None
+    for upper_bound, advice_for_temp in TEMP_ADVICE:
+        if upper_bound is not None and temp < upper_bound:
+            advised_clothes = advice_for_temp
+            break
+
+    msg = ADVICE_TEMPLATE_MSG.format(
+        clothes_type=advised_clothing
+    )
+    if is_raining:
+        msg += RAIN_WARNING
+    if is_dangerous:
+        msg += DANGER_WARNING
+
+    return msg
+    

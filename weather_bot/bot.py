@@ -167,7 +167,7 @@ def on_current_weather(update, context):
             feel_temp=weather_data['main']['feels_like'],
             emoji=select_emoji(weather_data['weather'][0]),
             wind_speed=weather_data['wind']['speed'],
-            advice='No advice yet! Come back later ;)'
+            advice=outerwear_advice(weather_data)
         )
     )
     update.message.reply_text(msg)
