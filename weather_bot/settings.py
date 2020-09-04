@@ -82,13 +82,17 @@ ADVICE_TEMPLATE_MSG = (
 )
 
 RAIN_WARNING = emojize(
-    "\n\n:umbrella: It is raining, so don't forget your umbrella.",
+    "\n\n:closed_umbrella: It is raining, so don't forget your umbrella.",
     use_aliases=True
 )
 
 DANGER_WARNING = emojize(
-    '\n\n:heavy_exclamation_mark: The weather seems dangerous. Consider staying home.',
+    '\n\n:warning: The weather seems dangerous. Consider staying home.',
     use_aliases=True
+)
+
+UV_WARNING = emojize(
+    '\n\n:collision: Note that UV index is high right now, hence it is highly recommended to use sunscreen.'
 )
 
 TEMP_ADVICE = [
