@@ -156,7 +156,7 @@ def uv_index_for_coords(lat, long):
             )
         )
     json_obj = response.json()
-    return json_obj['val']
+    return json_obj['value']
 
 
 def outerwear_advice(data):
