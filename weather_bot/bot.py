@@ -8,7 +8,7 @@ from telegram.ext import (Updater, CommandHandler, ConversationHandler, MessageH
 from weather_bot.db import Database
 import weather_bot.settings as settings
 from weather_bot.utils import (get_place_from_coords, get_places_from_text,
-                                current_weather_for_coords, select_emoji)
+                                current_weather_for_coords, select_emoji, outerwear_advice)
 
 
 logger = logging.getLogger(__name__)
